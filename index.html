@@ -20,7 +20,7 @@
 
 			<article v-if="currentTab==='about'">
 				<div v-for="letter in 'dice_fall'.split('')" class="card letter inline">{{letter}}</div>
-				<div v-for="letter in '0.4'.split('')" class="card letter inline" style="border-color: var(--bg-5);background: var(--bg-3);color:var(--bg-0);">{{ letter }}</div>
+				0.4
 				<br><br>
 				<p><strong style="color: var(--red)">warning: under construction! bugs are afoot.</strong></p>
 				<p>based on the tabletop game <a href="https://riffleshuffleandroll.itch.io/collapsi">collapsi</a>, by mark ball (published with permission).</p>
@@ -335,6 +335,7 @@
 			<div v-if="helping && currentTab==='game'" class="help">
 				<p><strong>{{ goalDescription }}</strong></p>
 				<p><em>note: everything after this ignores individual settings you may have set</em></p>
+				<h2>{{ currentSettings.name }}</h2>
 				<p>{{ currentSettings.description }}</p>
 				<p v-if="currentSettings.videoLink"><a :href="currentSettings.videoLink">video explaining this preset</a></p>
 			</div>
