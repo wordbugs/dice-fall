@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>dice fall</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link rel="stylesheet" href="style.css">
+		<script src="vue.js"></script>
+		<script src="script.js" defer></script>
+	</head>
+	<body>
+		<main id="app">
+
+
+			<nav id="tabs">
+				<button v-for="tabName in tabNames"
+					@click="setTab(tabName)"
+					:class="{active: currentTab===tabName}">{{tabName}}</button>
+			</nav>
+
+			<article v-if="currentTab==='about'">
+				<div v-for="letter in 'collapsi'.split('')" class="card letter inline">{{letter}}</div>
+				<div v-for="letter in '0.4'.split('')" class="card letter inline" style="border-color: var(--bg-5);background: var(--bg-3);color:var(--bg-0);">{{ letter }}</div>
+				<br><br>
+				<p><strong style="color: var(--red)">warning: under construction! bugs are afoot.</strong></p>
+				<p>based on the tabletop game <a href="https://riffleshuffleandroll.itch.io/collapsi">collapsi</a>, by mark ball (published with permission).</p>
+				<p>this version supports singleplayer and offline multiplayer gameplay only. for online multiplayer, try <a href="https://collapsi.wouteralberts.nl/">this one</a>!</p>
+				<p>click to move. there are keyboard settings, but they don't cover the input required by other settings.</p>
+				<p>you can end your first turn without exhausting your movement by pressing <code>Enter</code> or clicking on your piece.</p>
+
+				<h2>modifiers</h2>
+				<ul>
+					<li><strong>fallen</strong>: starts the game collapsed</li>
+					<li><strong>fragile</strong>: collapses the first time it's abandoned (not just if it's the first move of the player's turn)</li>
+					<li><strong>haven</strong>: allows the player to end turn on top of it no matter how many moves they have left (as long as they have already moved this turn)</li>
+					<li><strong>lookout</strong>: a player that starts in this tile can end their turn at any time after their first move</li>
+					<li><strong>portal</strong>: allows direct movement to any other portal. a piece can only use the first portal it lands on each turn</li>
+					<li><strong>floating</strong>: does not collapse unless a player is on it, needs to move, and can't</li>
+					<li><strong>hazard</strong>: collapses when a piece is on it at the end of its turn</li>
+					<!--li>bomb: (not implemented)</li>
+					<li>shovel: (not implemented)</li>
+					<li>tunnel: (not implemented)</li-->
+				</ul>
+				<p>suits are special modifiers that are merely cosmetic until they're configured to do something else.</p>
+
+				<h2>faces</h2>
+				<p>dice can have multiple faces.</p>
+				<p>when they do, players moving out of them will make them switch to the next face instead of collapsing.</p>
+				<p>when they run out of faces, they fall... unless they're floating, in which case they loop around to the first face.</p>
+				<p>faces can have their own values and modifiers.</p>
+
+			</article>
+
+			<section v-show="currentTab==='settings'" :style="{'--tile-size': currentSettings.tileSize}">
+
+				<button class="make-game" @click="setBoard">
+					☛ make game ☚
+				</button>
+
+				<h2>presets</h2>
+				<input-presets
+					@pick-preset="(p)=>this.pickPreset(p)"></input-presets>
+
+				<h2>general</h2>
+				<fieldset class="standalone">
+
+					<div>
+						goal:
+						<select v-model="intendedSettings.goal">
+							<option v-for="option in goalOptions"
+								:value="option.value">
+								{{ option.text }}
+							</option>
+						</select>
+					</div>
+
+					<p>
+						<input-small-number
+							v-model.number="intendedSettings.rows"
+							:min-value="1"
+							:max-value="100"></input-small-number>
+						rows,
+						<input-small-number
+							v-model.number="intendedSettings.columns"
+							:min-value="1"
+							:max-value="100"></input-small-number>
+						columns
+					</p>
+					<p>size of the dice: <input-small-number
+							v-model.number="intendedSettings.tileSize"
+							:min-value="1"
+							:max-value="999"></input-small-number> px</p>
+					<label><input type="checkbox" v-model="intendedSettings.randomizeTurnOrder"> randomize turn order</label>
+					<p :style="{color: deckSize === intendedSize? 'inherit' : 'var(--red)'}">
+						{{ deckSize }}/{{ intendedSize }}: {{
+						deckSize === intendedSize
+							? 'no dice will be skipped or duplicated'
+							: deckSize > intendedSize
+								? 'too many dice for this board size! some will not show up'
+								: 'too few dice for this board size! some will be duplicated'
+						}}
+					</p>
+				</fieldset>
+				
+				<h2>players</h2>
+				<button @click="draftPlayer()">add player</button>
+				<div>
+					<template v-for="(player, i) in intendedSettings.playerTemplates">
+						<fieldset v-if="player.drafted"
+							:style="{color: player.color}">
+							{{ player.name }}
+							<select v-model="player.controller">
+								<option v-for="controller in controllers">
+									{{ controller }}
+								</option>
+							</select>
+							<button
+								class="corner"
+								@click="player.drafted = false">×</button>
+						</fieldset>
+					</template>
+				</div>				
+
+				<h2>dice</h2>
+				<button @click="addTile()">add die</button>
+				<div style="--tile-size: 50px">
+					<fieldset v-for="home in [intendedSettings.homeDiceType]">
+						
+						<div>
+							<custom-tooltip>nº of copies of this die that will be in the board, assuming the total nº of dice matches the board size</custom-tooltip>
+							amount: {{intendedPlayers.length}} (nº of players)
+						</div>
+
+						<div>
+							<custom-tooltip>each copy gets a different suit, and they start repeating if there's more than four</custom-tooltip>
+							<label>
+								<input type="checkbox" v-model="home.setSuit">
+								set suit
+							</label>
+						</div>
+
+						<div class="add-button">
+							<button @click="addFace(home)">add face</button>
+						</div>
+						<fieldset v-for="(face, i) in home.faces" 
+								class="tile-showcase"
+								:style="{'--color-home': intendedSettings.playerTemplates[0].color}">
+
+							<collapsi-cell
+								class="free"
+								:tile="{
+									faces: home.faces,
+									modifiers: homeModifiers,
+								}"
+								:face-index="i"
+								state="3"
+								:y="0"
+								:x="0"></collapsi-cell>
+
+							<div>
+								<custom-tooltip>nº of moves a piece can make in a turn where it starts on this die</custom-tooltip>
+								value:
+								<input-small-number
+									v-model.number="face.value"
+									:min-value="1"
+									:max-value="9"></input-small-number>
+							</div>
+
+							<modifier-selector
+								:allowed-modifiers="modifiers"
+								:selected-modifiers="face.modifiers"
+								:mandatory-modifiers="new Set(['home'])"
+								@add-modifier="e => addModifier(face, e)"
+								@remove-modifier="m => face.modifiers.delete(m)"></modifier-selector>
+
+						</fieldset>
+
+					</fieldset>
+					<fieldset v-for="(tile, i) in intendedSettings.diceTypes">
+							
+						<button
+								class="corner"
+								@click="intendedSettings.diceTypes.splice(i, 1)">×</button>
+
+						<input-dice-amount v-model.number="tile.amount"></input-dice-amount>
+
+						<div>
+							<custom-tooltip>each copy gets a different suit, and they start repeating if there's more than four</custom-tooltip>
+							<label>
+								<input type="checkbox" v-model.number="tile.setSuit">
+								set suit
+							</label>
+						</div>
+
+						<div class="add-button">
+							<button @click="addFace(tile)">add face</button>
+						</div>
+						<fieldset
+								class="tile-showcase"
+								v-for="(face, j) in tile.faces">
+
+							<div>
+								<custom-tooltip>nº of moves a piece can make in a turn where it starts on this die</custom-tooltip>
+								value:
+								<input-small-number
+									v-model.number="face.value"
+									:min-value="1"
+									:max-value="9"></input-small-number>
+							</div>
+
+							<modifier-selector
+									:allowed-modifiers="modifiers"
+									:selected-modifiers="face.modifiers"
+									:mandatory-modifiers="new Set()"
+									@add-modifier="e => addModifier(face, e)"
+									@remove-modifier="m => face.modifiers.delete(m)"></modifier-selector>
+
+							<collapsi-cell
+									class="free"
+									:tile="tile"
+									:face-index="j"
+									state="3"
+									:y="0"
+									:x="0"></collapsi-cell>
+
+							<button v-show="tile.faces.length > 1"
+									class="corner"
+									@click="removeFace(tile, j)">×</button>
+
+						</fieldset>
+
+					</fieldset>
+				</div>
+
+				<h2>suits</h2>
+				<div style="--tile-size: 50px">
+					<fieldset v-for="suit in suits" class="tile-showcase">
+						
+						<modifier-selector
+							:allowed-modifiers="modifiers.filter(m => !suitNames.has(m))"
+							:selected-modifiers="intendedSettings.suitModifiers[suit.name]"
+							:mandatory-modifiers="new Set()"
+							@add-modifier="e => addSuitModifier(suit.name, e)"
+							@remove-modifier="m => intendedSettings.suitModifiers[suit.name].delete(m)"></modifier-selector>
+
+						<collapsi-cell
+							class="free"
+							:tile="{
+								faceIndex: 0,
+								faces: [{
+									value: 1,
+									modifiers: new Set([
+										suit.name,
+										...intendedSettings.suitModifiers[suit.name]])
+									}]
+								}"
+							:face-index="0"
+							state="3"
+							:y="0"
+							:x="0"></collapsi-cell>
+					</fieldset>
+				</div>
+
+				<button class="make-game" @click="setBoard">
+					☛ make game ☚
+				</button>
+			</section>
+
+			<section v-if="currentTab==='game'"
+				class="board"
+				:style="{'--tile-size': currentSettings.tileSize+'px', width: 'calc(' + columns + ' * var(--tile-size))', height: 'calc(' + rows + ' * var(--tile-size))', '--rows': rows, '--columns': columns}">
+				
+				<collapsi-cell v-for="(die, i) in dice"
+					:tile="die"
+					:face-index="die.faceIndex"
+					:state="die.state"
+					:x="i % columns"
+					:y="Math.floor(i/columns)"
+					:player="activePlayer"
+					:legal="legalMoves.includes(i)"
+					:home="die.home"
+					@move-in="moveTo(i)"></collapsi-cell>
+				
+				<collapsi-piece v-for="player in players"
+					:player="player"
+					:stop-is-legal="legalMoves.includes(player.position)"
+					@manually-end-turn="manuallyEndTurn"></collapsi-piece>
+
+				<!--end-lettering
+					v-if="gameState === 'over'"
+					:first="remainingPlayers[0].name"
+					last="wins"></end-lettering>
+				<end-lettering
+					v-else-if="gameState === 'victory'"
+					first="you"
+					last="win"></end-lettering>
+				<end-lettering
+					v-else-if="gameState === 'loss'"
+					first="game"
+					last="over"></end-lettering-->
+				<template v-if="gameState === 'over'">
+					<div v-for="(letter, i) in remainingPlayers[0].name.split('')"
+						class="card letter"
+						:style="getLetterStyle(i)">{{letter}}</div>
+					<div v-for="(letter, i) in 'wins'.split('')"
+						class="card letter"
+						:style="getLetterStyle(size - 4 + i)">{{letter}}</div>
+				</template>
+				<template v-else-if="gameState === 'victory'">
+					<div v-for="(letter, i) in 'you'.split('')"
+						class="card letter"
+						:style="getLetterStyle(i)">{{letter}}</div>
+					<div v-for="(letter, i) in 'win'.split('')"
+						class="card letter"
+						:style="getLetterStyle(size - 3 + i)">{{letter}}</div>
+				</template>
+				<template v-else-if="gameState === 'loss'">
+					<div v-for="(letter, i) in 'game'.split('')"
+						class="card letter"
+						:style="getLetterStyle(i)">{{letter}}</div>
+					<div v-for="(letter, i) in 'over'.split('')"
+						class="card letter"
+						:style="getLetterStyle(size - 4 + i)">{{letter}}</div>
+				</template>
+
+				<button class="tile-button" @click="setBoard">⟳</button>
+
+			</section>
+
+			<button v-if="currentTab==='game'"
+				class="help-button"
+				@click="helping=!helping">
+					{{ helping? 'x' : '?' }}
+			</button>
+			<div v-if="helping && currentTab==='game'" class="help">
+				<p><strong>{{ goalDescription }}</strong></p>
+				<p><em>note: everything after this ignores individual settings you may have set</em></p>
+				<p>{{ currentSettings.description }}</p>
+				<p v-if="currentSettings.videoLink"><a :href="currentSettings.videoLink">video explaining this preset</a></p>
+			</div>
+
+		</main>
+	</body>
+</html>
