@@ -338,6 +338,12 @@
 				<h2>{{ currentSettings.name }}</h2>
 				<p>{{ currentSettings.description }}</p>
 				<p v-if="currentSettings.videoLink"><a :href="currentSettings.videoLink">video explaining this preset</a></p>
+				<iframe 
+					type="text/html"
+					width="484"
+					height="390"
+					:src="currentSettings.videoLink"
+					frameborder="0"></iframe>
 			</div>
 
 		</main>
