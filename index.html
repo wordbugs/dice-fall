@@ -90,7 +90,15 @@
 							v-model.number="intendedSettings.tileSize"
 							:min-value="1"
 							:max-value="999"></input-small-number> px</p>
-					<label><input type="checkbox" v-model="intendedSettings.randomizeTurnOrder"> randomize turn order</label>
+					<p><label><input type="checkbox" v-model="intendedSettings.randomizeTurnOrder"> randomize turn order</label></p>
+					<p>
+						<label>
+							<input
+								type="checkbox"
+								v-model="intendedSettings.randomPlacement">
+							pieces are placed automatically
+						</label>
+					</p>
 					<p :style="{color: deckSize === intendedSize? 'inherit' : 'var(--red)'}">
 						{{ deckSize }}/{{ intendedSize }}: {{
 						deckSize === intendedSize
@@ -105,8 +113,8 @@
 				<h2>players</h2>
 				<button @click="draftPlayer()">add player</button>
 				<div>
-					<template v-for="(player, i) in intendedSettings.playerTemplates">
-						<fieldset v-if="player.drafted"
+					<template v-for="(player, i) in intendedPlayers">
+						<fieldset
 							:style="{color: player.color}">
 							{{ player.name }}
 							<select v-model="player.controller">
@@ -114,7 +122,7 @@
 									{{ controller }}
 								</option>
 							</select>
-							<button
+							<button v-show="intendedPlayers.length > 1"
 								class="corner"
 								@click="player.drafted = false">×</button>
 						</fieldset>
@@ -124,61 +132,9 @@
 				<h2>dice</h2>
 				<button @click="addTile()">add die</button>
 				<div style="--tile-size: 50px">
-					<fieldset v-for="home in [intendedSettings.homeDiceType]">
-						
-						<div>
-							<custom-tooltip>nº of copies of this die that will be in the board, assuming the total nº of dice matches the board size</custom-tooltip>
-							amount: {{intendedPlayers.length}} (nº of players)
-						</div>
-
-						<div>
-							<custom-tooltip>each copy gets a different suit, and they start repeating if there's more than four</custom-tooltip>
-							<label>
-								<input type="checkbox" v-model="home.setSuit">
-								set suit
-							</label>
-						</div>
-
-						<div class="add-button">
-							<button @click="addFace(home)">add face</button>
-						</div>
-						<fieldset v-for="(face, i) in home.faces" 
-								class="tile-showcase"
-								:style="{'--color-home': intendedSettings.playerTemplates[0].color}">
-
-							<collapsi-cell
-								class="free"
-								:tile="{
-									faces: home.faces,
-									modifiers: homeModifiers,
-								}"
-								:face-index="i"
-								state="3"
-								:y="0"
-								:x="0"></collapsi-cell>
-
-							<div>
-								<custom-tooltip>nº of moves a piece can make in a turn where it starts on this die</custom-tooltip>
-								value:
-								<input-small-number
-									v-model.number="face.value"
-									:min-value="1"
-									:max-value="9"></input-small-number>
-							</div>
-
-							<modifier-selector
-								:allowed-modifiers="modifiers"
-								:selected-modifiers="face.modifiers"
-								:mandatory-modifiers="new Set(['home'])"
-								@add-modifier="e => addModifier(face, e)"
-								@remove-modifier="m => face.modifiers.delete(m)"></modifier-selector>
-
-						</fieldset>
-
-					</fieldset>
 					<fieldset v-for="(tile, i) in intendedSettings.diceTypes">
 							
-						<button
+						<button v-show="intendedSettings.diceTypes.length > 1"
 								class="corner"
 								@click="intendedSettings.diceTypes.splice(i, 1)">×</button>
 
