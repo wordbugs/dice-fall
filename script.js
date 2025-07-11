@@ -1,4 +1,4 @@
-// ⚀⚁⚃⚄⚅♠♥♦♣♤♡♢♧⛀⛁⛂⛃ //
+//⚀⚁⚃⚄⚅♠♥♦♣♤♡♢♧⛀⛁⛂⛃//
 
 const STATE_INTACT = 0;
 const STATE_WEAK = 1;
@@ -388,8 +388,10 @@ const app = createApp({
 
 			shuffle(homeCandidates)
 
-			for (let i = 0; i < n; i++) {
-				homeCandidates[i].playerStart = i
+			if (this.intendedSettings.randomPlacement) {
+				for (let i = 0; i < n; i++) {
+					homeCandidates[i].playerStart = i
+				}
 			}
 
 			//for (let i = 0; i < n; i++) {
@@ -554,7 +556,7 @@ const app = createApp({
 			this.players = [];
 			for (const player of this.intendedPlayers) {
 				this.players.push({
-					position: -1,
+					position: -1000,
 					x: -1,
 					y: -1,
 					movesLeft: 4,
@@ -592,6 +594,7 @@ const app = createApp({
 					c.state = STATE_COLLAPSED;
 				}
 			}
+
 			//this.checkLegalMoves()
 			this.activePlayerId = 0;
 			this.howOver = 0;
@@ -649,32 +652,34 @@ const app = createApp({
 				// TODO: remember what this is for?
 				this.dice[p.position].state = STATE_COLLAPSED;
 				this.setPosition(p, i);
-				this.nextTurn();
+				this.endTurn();
 				return;
 			}
 			if (!this.isLegalMove(i)) return;
 			if (p.position === i) {
-				this.nextTurn();
+				this.endTurn();
 				return;
 			}
-			let die = this.dice[p.position];
-			if (this.activePlayer.movesMade === 0 || this.dieHas(die, "fragile")) {
-				if (die.faceIndex < die.faces.length - 1) {
-					die.faceIndex++;
-				} else if (this.dieHas(die, "floating")) {
-					die.faceIndex = 0;
-				} else {
-					die.state = STATE_COLLAPSED;
+			if (this.activePlayer.position >= 0) {
+				let die = this.dice[p.position];
+				if (this.activePlayer.movesMade === 0 || this.dieHas(die, "fragile")) {
+					if (die.faceIndex < die.faces.length - 1) {
+						die.faceIndex++;
+					} else if (this.dieHas(die, "floating")) {
+						die.faceIndex = 0;
+					} else {
+						die.state = STATE_COLLAPSED;
+					}
 				}
-			}
-			if (this.dieHas(die, "portal")) {
-				this.activePlayer.hasUsedAPortalThisTurn = true;
+				if (this.dieHas(die, "portal")) {
+					this.activePlayer.hasUsedAPortalThisTurn = true;
+				}
 			}
 			this.setPosition(p, i);
 			p.movesLeft--;
 			p.movesMade++;
 			this.dice[i].state = STATE_WEAK;
-			if (p.movesLeft === 0) this.nextTurn();
+			if (p.movesLeft === 0) this.endTurn();
 			else {
 				this.checkLegalMoves();
 				if (this.legalMoves.length) this.awaitCommand();
@@ -715,7 +720,7 @@ const app = createApp({
 			}
 			return target;
 		},
-		nextTurn() {
+		endTurn() {
 			let endTile = this.dice[this.activePlayer.position];
 			let endFace = this.getFace(endTile);
 			if (endFace.modifiers.has("hazard") && !this.activePlayer.fallen) {
@@ -734,17 +739,27 @@ const app = createApp({
 				this.currentSettings.goal === "last_one_standing"
 			) {
 				this.endGame("over");
-				return;
+			} else {
+				this.nextTurn();
 			}
+
+		},
+		nextTurn() {
 			const id = this.nextPlayerId;
 			this.activePlayerId = id;
 			this.activePlayer.active = true;
 			this.turn++;
-			this.activePlayer.movesLeft = this.getFace(
-				this.dice[this.activePlayer.position],
-			).value;
+			if (this.activePlayer.position >= 0) {
+				this.activePlayer.movesLeft = this.getFace(
+					this.dice[this.activePlayer.position],
+				).value;
+				this.activePlayer.turnStartTile = this.dice[this.activePlayer.position];
+			} else {
+				this.activePlayer.movesLeft = 1;
+				this.activePlayer.turnStartTile = null;
+			}
 			this.activePlayer.hasUsedAPortalThisTurn = false;
-			this.activePlayer.turnStartTile = this.dice[this.activePlayer.position];
+			
 
 			if (this.activePlayer.movesLeft === 0) this.activePlayer.movesLeft = 1;
 			// TODO: delete this? player loses?
@@ -760,7 +775,14 @@ const app = createApp({
 				}
 			}
 
-			if (this.checkLegalMoves()) this.awaitCommand();
+			if (this.activePlayer.position < 0) {
+				this.legalMoves = [];
+				for (let i = 0; i < this.size; i++) {
+					if (this.isLegalPosition(i))
+						this.legalMoves.push(i);
+				}
+				this.awaitCommand();
+			} else if (this.checkLegalMoves()) this.awaitCommand();
 		},
 		awaitCommand() {
 			if (this.activePlayer.controller.startsWith("bot:")) {
@@ -793,7 +815,7 @@ const app = createApp({
 				player === this.activePlayer &&
 				this.legalMoves.includes(player.position)
 			) {
-				this.nextTurn();
+				this.endTurn();
 			}
 		},
 		endGame(state) {
@@ -877,7 +899,7 @@ const app = createApp({
 							return;
 						}
 					}
-					this.nextTurn();
+					this.endTurn();
 				}, 100);
 			}, 200);
 		},
@@ -1539,7 +1561,7 @@ app.component("input-presets", {
 			return {
 				name: "unknown preset",
 				randomizeTurnOrder: true,
-        randomPlacement: true,
+				randomPlacement: true,
 				description: "?",
 				tileSize: 60,
 				numberOfPlayers: 2,
