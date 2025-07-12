@@ -1339,8 +1339,8 @@ app.component("input-presets", {
 				{
 					name: "collapsi standard 1v1 4x4",
 					description:
-						"beginner-friendly setup created by mark ball. the first turn you can move up to four times (click your piece to stop moving); since then you MUST move as much as the number on the die you'r on demands. dice collapse when you leave them at the start of your turn... first to be unable to move loses.",
-					videoLink: "https://www.youtube.com/watch?v=6vYEHdjlw3g&t=58s",
+						"beginner-friendly setup created by mark ball. the first turn you must move once; since then you must move as much as the number on the die you'r on demands. dice collapse when you leave them at the start of your turn... first to be unable to move loses.",
+					videoLink: "https://www.youtube.com/watch?v=FgHkYEFGCXI",
 					playerControllers: [
 						CONTROLLER_PLAYER_MOUSE_AND_WASD,
 						CONTROLLER_BOT_RANDOM,
@@ -1348,7 +1348,7 @@ app.component("input-presets", {
 					columns: 4,
 					rows: 4,
 					diceTypes: [
-						{ amount: 2, faces: [{ value: 4, modifiers: ["lookout", "home"] }] },
+						{ amount: 2, faces: [{ value: 1, modifiers: ["home"] }] },
 						{ amount: 4, faces: [{ value: 1 }] },
 						{ amount: 4, faces: [{ value: 2 }] },
 						{ amount: 4, faces: [{ value: 3 }] },
@@ -1356,9 +1356,9 @@ app.component("input-presets", {
 					],
 				},
 				{
-					name: "collapsi standard 1v1 6x6",
+					name: "collapsi standard 1v3 6x6",
 					description:
-						"recommended vanilla setup for collapsi, created by mark ball. the first turn you can move up to four times (click your piece to stop moving); since then you MUST move as much as the number on the die you'r on demands. dice collapse when you leave them at the start of your turn... first to be unable to move loses.",
+						"recommended vanilla setup for collapsi, created by mark ball. the first turn you must move once; since then you must move as much as the number on the die you'r on demands. dice collapse when you leave them at the start of your turn... first to be unable to move loses.",
 
 					playerControllers: [
 						CONTROLLER_PLAYER_MOUSE_AND_WASD,
@@ -1368,7 +1368,7 @@ app.component("input-presets", {
 					],
 					diceTypes: [
 						//{ amount: 2, setSuit: true, faces: [{value: 1, modifiers: ['fallen']}] },
-						{ amount: 4, faces: [{ value: 4, modifiers: ["lookout", "home"] }] },
+						{ amount: 4, faces: [{ value: 1, modifiers: ["home"] }] },
 						{ amount: 8, faces: [{ value: 1 }] },
 						{ amount: 8, faces: [{ value: 2 }] },
 						{ amount: 8, faces: [{ value: 3 }] },
