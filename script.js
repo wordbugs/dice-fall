@@ -366,7 +366,7 @@ const app = createApp({
 			}
 
 			const len = deck.length;
-			for (let i = 0; i < this.size - n - len; i++) {
+			for (let i = 0; i < this.size - len; i++) {
 				deck.push(this.cloneDie(deck[i]));
 			}
 
