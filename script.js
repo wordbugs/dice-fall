@@ -1356,7 +1356,7 @@ app.component("input-presets", {
 					],
 				},
 				{
-					name: "collapsi standard 1v3 6x6",
+					name: "collapsi standard 1v1v1v1 6x6",
 					description:
 						"recommended vanilla setup for collapsi, created by mark ball. the first turn you must move once; since then you must move as much as the number on the die you'r on demands. dice collapse when you leave them at the start of your turn... first to be unable to move loses.",
 
