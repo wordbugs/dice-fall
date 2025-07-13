@@ -321,6 +321,9 @@ const app = createApp({
 		rows() {
 			return this.currentSettings.rows;
 		},
+		tooFewHomes() {
+			return this.intendedPlayers.length > this.deck.reduce((acc, d) => acc + d.faces[0].modifiers.has('home'), 0);
+		},
 		deck() {
 			let deck = [];
 			for (const tile of this.intendedSettings.diceTypes) {
@@ -361,36 +364,36 @@ const app = createApp({
 
 			const n = this.intendedPlayers.length;
 
-			if (deck.length !== this.size) {
+			if (deck.length !== this.intendedSize) {
 				shuffle(deck);
 			}
 
 			const len = deck.length;
-			for (let i = 0; i < this.size - len; i++) {
+			for (let i = 0; i < this.intendedSize - len; i++) {
 				deck.push(this.cloneDie(deck[i]));
 			}
 
-			for (let i = deck.length; i > this.size; i--) {
+			for (let i = deck.length; i > this.intendedSize; i--) {
 				deck.pop();
 			}
 
-			let homeCandidates = []
+			let homeCandidates = [];
 
 			for (const die of deck) {
 				if (die.faces[0].modifiers.has('home')) {
-					homeCandidates.push(die)
+					homeCandidates.push(die);
 				}
 			}
 
 			if (homeCandidates.length < n) {
-				homeCandidates = deck
+				homeCandidates = deck;
 			}
 
-			shuffle(homeCandidates)
+			shuffle(homeCandidates);
 
 			if (this.intendedSettings.randomPlacement) {
 				for (let i = 0; i < n; i++) {
-					homeCandidates[i].playerStart = i
+					homeCandidates[i].playerStart = i;
 				}
 			}
 
@@ -777,9 +780,16 @@ const app = createApp({
 
 			if (this.activePlayer.position < 0) {
 				this.legalMoves = [];
-				for (let i = 0; i < this.size; i++) {
-					if (this.isLegalPosition(i))
-						this.legalMoves.push(i);
+				if (this.tooFewHomes) {
+					for (let i = 0; i < this.size; i++) {
+						if (this.isLegalPosition(i))
+							this.legalMoves.push(i);
+					}
+				} else {
+					for (let i = 0; i < this.size; i++) {
+						if (this.isLegalPosition(i) && this.dice[i].faces[0].modifiers.has('home'))
+							this.legalMoves.push(i);
+					}
 				}
 				this.awaitCommand();
 			} else if (this.checkLegalMoves()) this.awaitCommand();
@@ -1339,7 +1349,7 @@ app.component("input-presets", {
 				{
 					name: "collapsi standard 1v1 4x4",
 					description:
-						"beginner-friendly setup created by mark ball. the first turn you must move once; since then you must move as much as the number on the die you'r on demands. dice collapse when you leave them at the start of your turn... first to be unable to move loses.",
+						"beginner-friendly setup created by mark ball. the first turn you must move once; since then you must move as much as the number on the die you are on demands. dice collapse when you leave them at the start of your turn... first to be unable to move loses.",
 					videoLink: "https://www.youtube.com/watch?v=FgHkYEFGCXI",
 					playerControllers: [
 						CONTROLLER_PLAYER_MOUSE_AND_WASD,
@@ -1358,7 +1368,7 @@ app.component("input-presets", {
 				{
 					name: "collapsi standard 1v1v1v1 6x6",
 					description:
-						"recommended vanilla setup for collapsi, created by mark ball. the first turn you must move once; since then you must move as much as the number on the die you'r on demands. dice collapse when you leave them at the start of your turn... first to be unable to move loses.",
+						"recommended vanilla setup for collapsi, created by mark ball. the first turn you must move once; since then you must move as much as the number on the die you are on demands. dice collapse when you leave them at the start of your turn... first to be unable to move loses.",
 
 					playerControllers: [
 						CONTROLLER_PLAYER_MOUSE_AND_WASD,
@@ -1398,7 +1408,7 @@ app.component("input-presets", {
 						{
 							amount: 9,
 							setSuit: true,
-							faces: [{ value: 4, modifiers: ["lookout", "home"] }],
+							faces: [{ value: 3, modifiers: ["home"] }],
 						},
 						{
 							amount: 64,
@@ -1457,7 +1467,7 @@ app.component("input-presets", {
 						{
 							amount: 4,
 							faces: [
-								{ value: 4, modifiers: ["lookout", "home"] },
+								{ value: 1, modifiers: ["home"] },
 								{ value: 7, modifiers: ["floating", "hazard", "spades"] },
 							],
 						},
@@ -1504,8 +1514,8 @@ app.component("input-presets", {
 						{
 							amount: 4,
 							faces: [
-								{ value: 4, modifiers: ["lookout", "home"] },
-								{ value: 4, modifiers: ["floating", "hazard"] },
+								{ value: 1, modifiers: ["fragile", "home"] },
+								{ value: 1, modifiers: ["floating", "hazard"] },
 							],
 						},
 						{

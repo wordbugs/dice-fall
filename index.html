@@ -108,6 +108,7 @@
 								: 'too few dice for this board size! some will be duplicated'
 						}}
 					</p>
+					<p v-if="tooFewHomes" style="color:var(--red);">there aren't enough dice with the home modifier in their top face; all dice will be considered potential homes</p>
 				</fieldset>
 				
 				<h2>players</h2>
