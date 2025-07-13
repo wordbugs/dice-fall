@@ -677,6 +677,8 @@ const app = createApp({
 				if (this.dieHas(die, "portal")) {
 					this.activePlayer.hasUsedAPortalThisTurn = true;
 				}
+			} else {
+				this.dice[i].home = this.activePlayer
 			}
 			this.setPosition(p, i);
 			p.movesLeft--;
@@ -1032,7 +1034,7 @@ app.component("collapsi-cell", {
 			return {
 				"--y": this.y,
 				"--x": this.x,
-				"--color-player": this.player ? this.player.color : "var(--bg-7)",
+				"--color-player": this.player ? this.player.color : "var(--bg-1)",
 				"--color-home": this.home ? this.home.color : "",
 			};
 		},
