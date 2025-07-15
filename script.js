@@ -1643,7 +1643,7 @@ app.component("input-presets", {
 				{
 					name: "collapsi wizards 1v1 6x6",
 					description:
-						"collapsi except spades allow you to float a collapsed tile of your choosing, clubs allow you to sink a floating tile of your choosing, hearts are fragile (T_T) and diamonds are portals.",
+						"collapsi except spades allow you to float a collapsed tile of your choosing, clubs allow you to sink a floating tile of your choosing, hearts are havens that let you stop moving (awww) but are also fragile (T_T) and diamonds are portals.",
 					playerControllers: [
 						CONTROLLER_PLAYER_MOUSE_AND_WASD,
 						CONTROLLER_BOT_RANDOM,
@@ -1652,7 +1652,7 @@ app.component("input-presets", {
 					rows: 6,
 					suitModifiers: {
 						spades: [ "shovel" ],
-						hearts: [ "fragile" ],
+						hearts: [ "fragile", "haven" ],
 						diamonds: [ "portal" ],
 						clubs: [ "bomb" ],
 					},
