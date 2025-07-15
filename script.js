@@ -130,6 +130,8 @@ const app = createApp({
 				"lookout",
 				"floating",
 				"hazard",
+				"shovel",
+				"bomb",
 				"spades",
 				"hearts",
 				"diamonds",
@@ -177,6 +179,26 @@ const app = createApp({
 					symbol: "♣",
 				},
 			],
+			abilities: {
+				"shovel": {
+					isValidTarget(die) {
+						return die.state === STATE_COLLAPSED;
+					},
+					effect(die) {
+						die.state = STATE_INTACT;
+					},
+				},
+				"bomb": {
+					isValidTarget(die) {
+						return die.state === STATE_INTACT;
+					},
+					effect(die) {
+						die.state = STATE_COLLAPSED;
+					},
+				},
+			},
+			availableAbilities: [],
+			activeAbility: null,
 			currentTab: "game",
 
 			intendedSettings: {
@@ -286,6 +308,7 @@ const app = createApp({
 			currentSettings: null,
 			dice: null,
 			legalMoves: [],
+			legalAbilityTargets: [],
 			activePlayerId: 0,
 			gameState: null,
 			howOver: 0,
@@ -770,10 +793,9 @@ const app = createApp({
 			this.activePlayerId = id;
 			this.activePlayer.active = true;
 			this.turn++;
+			const startingFace = this.getFace(this.dice[this.activePlayer.position]);
 			if (this.activePlayer.position >= 0) {
-				this.activePlayer.movesLeft = this.getFace(
-					this.dice[this.activePlayer.position],
-				).value;
+				this.activePlayer.movesLeft = startingFace.value;
 				this.activePlayer.turnStartTile = this.dice[this.activePlayer.position];
 			} else {
 				this.activePlayer.movesLeft = 1;
@@ -796,6 +818,25 @@ const app = createApp({
 				}
 			}
 
+			this.legalMoves = [];
+
+			this.availableAbilities = [];
+			this.legalAbilityTargets = [];
+			if (startingFace.modifiers.has("shovel")) {
+				this.availableAbilities.push("shovel")
+			}
+			if (startingFace.modifiers.has("bomb")) {
+				this.availableAbilities.push("bomb")
+			}
+			if (this.availableAbilities.length === 1) {
+				this.chooseAbility(this.availableAbilities[0]);
+			}
+
+			if (this.activeAbility || this.availableAbilities.length) {
+				this.awaitCommand();
+				return;
+			}
+
 			if (this.activePlayer.position < 0) {
 				this.legalMoves = [];
 				if (this.tooFewHomes) {
@@ -810,7 +851,9 @@ const app = createApp({
 					}
 				}
 				this.awaitCommand();
-			} else if (this.checkLegalMoves()) this.awaitCommand();
+			} else if (this.checkLegalMoves()) {
+				this.awaitCommand();
+			}
 		},
 		awaitCommand() {
 			if (this.activePlayer.controller.startsWith("bot:")) {
@@ -818,6 +861,15 @@ const app = createApp({
 					this.timeoutId = setTimeout(() => {
 						this.timeoutId = 0;
 						if (this.pause) {
+							return;
+						}
+						if (this.availableAbilities.length > 1) {
+							this.chooseAbility(this.availableAbilities[Math.floor(Math.random() * this.availableAbilities.length)]);
+						}
+						if (this.activeAbility) {
+							this.activateAbility(this.legalAbilityTargets[Math.floor(Math.random() * this.legalAbilityTargets.length)]);
+							if (this.checkLegalMoves())
+								this.awaitCommand();
 							return;
 						}
 						switch (this.activePlayer.controller) {
@@ -863,6 +915,20 @@ const app = createApp({
 					}
 				}, 40);
 			}, 600);
+		},
+		chooseAbility(abilityName) {
+			this.activeAbility = abilityName;
+			for (let i = 0; i < this.dice.length; i++) {
+				if (this.abilities[this.activeAbility].isValidTarget(this.dice[i])) {
+					this.legalAbilityTargets.push(i);
+				}
+			}
+			this.availableAbilities = [];
+		},
+		activateAbility(i) {
+			this.abilities[this.activeAbility].effect(this.dice[i]);
+			this.activeAbility = null;
+			this.checkLegalMoves();
 		},
 		checkLegalMoves() {
 			if (this.activePlayer.fallen) {
@@ -1297,6 +1363,8 @@ app.component("modifier-selector", {
 				floating:
 					"does not collapse unless a player is on it, needs to move, and can't",
 				hazard: "collapses when a piece is on it at the end of its turn",
+				bomb: "allows whoever starts a turn on it to make any standing (and unoccupied) die collapse",
+				shovel: "allows whoever starts a turn on it to make any fallen die float again",
 				spades:
 					"suit meta-modifier; merely cosmetic unless assigned modifiers of its own",
 				hearts:
@@ -1572,6 +1640,31 @@ app.component("input-presets", {
 						},
 					],
 				},
+				{
+					name: "collapsi wizards 1v1 6x6",
+					description:
+						"collapsi except spades allow you to float a collapsed tile of your choosing, clubs allow you to sink a floating tile of your choosing, hearts are fragile (T_T) and diamonds are portals.",
+					playerControllers: [
+						CONTROLLER_PLAYER_MOUSE_AND_WASD,
+						CONTROLLER_BOT_RANDOM,
+					],
+					columns: 6,
+					rows: 6,
+					suitModifiers: {
+						spades: [ "shovel" ],
+						hearts: [ "fragile" ],
+						diamonds: [ "portal" ],
+						clubs: [ "bomb" ],
+					},
+					diceTypes: [
+						{ amount: 2, faces: [{ value: 1, modifiers: ["home"] }] },
+						{ amount: 2, setSuit: true, faces: [{ value: 1, modifiers: ["fallen"] }] },
+						{ amount: 8, setSuit: true, faces: [{ value: 1 }] },
+						{ amount: 8, setSuit: true, faces: [{ value: 2 }] },
+						{ amount: 8, setSuit: true, faces: [{ value: 3 }] },
+						{ amount: 8, setSuit: true, faces: [{ value: 4 }] },
+					],
+				},
 			],
 		};
 	},
@@ -1749,6 +1842,41 @@ app.component("input-presets", {
 				return false;
 			}
 			return true;
+		},
+	},
+});
+
+app.component("ability-symbol", {
+	props: ['ability', 'x', 'y'],
+	template: `
+		<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="ability-button" :style="style">
+			<g v-if="ability === 'bomb'">
+				<path
+					d="M 10,30
+							Q 50,50 50,90
+							Q 10,60 10,30 z" />
+				<path
+					d="M 90,30
+							Q 50,50 50,90
+							Q 90,60 90,30 z" />
+			</g>
+			<g v-else-if="ability === 'shovel'">
+				<path
+					d="M 10,70
+							Q 50,50 50,10
+							Q 10,40 10,70 z" />
+				<path
+					d="M 90,70
+							Q 50,50 50,10
+							Q 90,40 90,70 z" />
+			</g>
+		</svg>`,
+	computed: {
+		style() {
+			return {
+				left: `calc(${this.x} * var(--tile-size))`,
+				top: `calc(${this.y-.15} * var(--tile-size))`,
+			};
 		},
 	},
 });

@@ -131,7 +131,7 @@ nav#tabs button.active {
 	border-color: var(--bg-1);
 	background: var(--bg-2);
 }
-.card.cell.portal {
+.card.cell.darkened {
 	background: var(--bg-2);
 }
 
@@ -177,11 +177,11 @@ nav#tabs button.active {
 	border-color: var(--bg-1);
 	z-index: calc(var(--y) - .5);
 }
-.portal .pip {
+.darkened .pip {
 	background: var(--bg-6);
 	border-color: var(--bg-6);
 }
-.portal.fallen .pip {
+.darkened.fallen .pip {
 	background: var(--bg-1);
 	border-color: var(--bg-1);
 }
@@ -279,12 +279,12 @@ a {
 	z-index: calc(var(--y) - .5);
 	top: calc(var(--y) * var(--tile-size) + .6 * var(--tile-size));
 }
-.die.portal {
+.die.darkened {
 	--bg-top: var(--bg-2);
 	--bg-corners: var(--bg-0);
 	--bg-side: var(--bg-1);
 }
-.die.portal.fallen {
+.die.darkened.fallen {
 	--bg-top: var(--bg-0);
 	--bg-corners: var(--bg-0);
 	--bg-side: var(--bg-0);
@@ -586,7 +586,7 @@ h1 {
 h2 {
 	font-size: 1.5em;
 	font-weight: 900;
-	color: var(--bg-2);
+	color: var(--bg-3);
 	text-align: right;
 }
 
@@ -661,4 +661,22 @@ fieldset ul {
 	padding: 8px;
 	background:var(--red);
 	color:var(--bg-0);
+}
+
+
+.ability-button {
+	position: absolute;
+	width: var(--tile-size);
+	height: var(--tile-size);
+	z-index: 800;
+	fill: var(--color-player);
+	border-radius: 50%;
+	background: var(--bg-1);
+	transition-duration: .4s;
+}
+.ability-button.see-through {
+	background: none;
+}
+.ability-button:hover {
+	fill: var(--bg-7);
 }

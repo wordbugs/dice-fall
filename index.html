@@ -20,8 +20,7 @@
 
 			<article v-if="currentTab==='about'">
 				<div v-for="letter in 'dice_fall'.split('')" class="card letter inline">{{letter}}</div>
-				<br><br>
-				<p><strong style="color: var(--red)">warning: under construction! bugs are afoot.</strong></p>
+				<br><br><br>
 				<p>based on the tabletop game <a href="https://riffleshuffleandroll.itch.io/collapsi">collapsi</a>, by mark ball (published with permission).</p>
 				<p>this version supports singleplayer and offline multiplayer gameplay only. for online multiplayer, try <a href="https://collapsi.wouteralberts.nl/">this one</a>!</p>
 				<p>click to move. there are keyboard settings, but they don't cover the input required by other settings.</p>
@@ -236,6 +235,23 @@
 					:player="player"
 					:stop-is-legal="legalMoves.includes(player.position)"
 					@manually-end-turn="manuallyEndTurn"></collapsi-piece>
+
+				<ability-symbol v-for="(ab, i) in availableAbilities"
+					:ability="ab"
+					:x="-1"
+					:y="i"
+					@click="chooseAbility(ab)"
+					:style="{'--color-player': activePlayer.color}"></ability-symbol>
+
+				<template v-if="activeAbility">
+					<ability-symbol v-for="i in legalAbilityTargets"
+						class="see-through"
+						:ability="activeAbility"
+						:x="getX(i)"
+						:y="getY(i)"
+						:style="{'--color-player': activePlayer.color}"
+						@click="activateAbility(i)"></ability-symbol>
+				</template>
 
 				<!--end-lettering
 					v-if="gameState === 'over'"
