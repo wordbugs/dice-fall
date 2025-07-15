@@ -24,6 +24,7 @@
 	--orange: hsl(40 60% 80%);
 	--lilac: hsl(250 60% 80%);
 	--grey: hsl(0 0% 80%);
+	--color-home: var(--bg-2);
 }
 
 *,

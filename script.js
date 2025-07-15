@@ -179,6 +179,8 @@ const app = createApp({
 			],
 			currentTab: "game",
 
+			settingsJson: "",
+
 			intendedSettings: {
 				rows: 4,
 				columns: 4,
@@ -588,6 +590,7 @@ const app = createApp({
 				const c = this.dice[i];
 				c.state = STATE_INTACT;
 				c.faceIndex = 0;
+				c.home = null;
 				if (!isNaN(c.playerStart)) {
 					const player = this.players[c.playerStart];
 					this.setPosition(player, i);
@@ -1317,16 +1320,22 @@ app.component("input-dice-amount", {
 });
 
 app.component("input-presets", {
-	props: [],
+	props: ["intendedSettings"],
 	template: `
 		<fieldset class="standalone">
 			<div v-for="(preset, i) in presets">
 				<custom-tooltip>{{ preset.description }}</custom-tooltip>
 				<button @click="pickPreset(preset)">{{ preset.name }}</button>
+				<span v-if="preset.imported">(imported)</span>
 			</div>
+			<button @click="exportSettings()">export</button>
+			or
+			<button @click="importSettings()">import</button>:
+			<input type="text" v-model="settingsJson"></input>
 		</fieldset>`,
 	data() {
 		return {
+			settingsJson: "",
 			presets: [
 				{
 					name: "collapsi solo 3x3",
@@ -1617,7 +1626,7 @@ app.component("input-presets", {
 			}
 
 			if (preset.suitModifiers) {
-				for (let suitName in suitModifiers) {
+				for (let suitName in preset.suitModifiers) {
 					settings.suitModifiers[suitName] = new Set(
 						preset.suitModifiers[suitName],
 					);
@@ -1678,6 +1687,27 @@ app.component("input-presets", {
 				diceType.amount = 1;
 			}
 			return diceType;
+		},
+		importSettings() {
+			let preset = JSON.parse(this.settingsJson);
+			preset.imported = true;
+			this.presets.push(preset);
+			this.pickPreset(preset);
+		},
+		exportSettings() {
+			console.log(JSON.stringify(this.intendedSettings))
+			let settings = JSON.parse(JSON.stringify(this.intendedSettings));
+			const diceTypes = this.intendedSettings.diceTypes;
+			for (let i = 0; i < diceTypes.length; i++) {
+				const faces = diceTypes[i].faces;
+				for (let j = 0; j < faces.length; j++) {
+					settings.diceTypes[i].faces[j].modifiers = [...faces[j].modifiers];
+				}
+			}
+			for (const key in settings.suitModifiers) {
+				settings.suitModifiers[key] = [...this.intendedSettings.suitModifiers[key]];
+			}
+			this.settingsJson = JSON.stringify(settings)
 		},
 	},
 	created() {
