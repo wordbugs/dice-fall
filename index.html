@@ -20,7 +20,6 @@
 
 			<article v-if="currentTab==='about'">
 				<div v-for="letter in 'dice_fall'.split('')" class="card letter inline">{{letter}}</div>
-				0.4
 				<br><br>
 				<p><strong style="color: var(--red)">warning: under construction! bugs are afoot.</strong></p>
 				<p>based on the tabletop game <a href="https://riffleshuffleandroll.itch.io/collapsi">collapsi</a>, by mark ball (published with permission).</p>
@@ -53,9 +52,7 @@
 
 			<section v-show="currentTab==='settings'" :style="{'--tile-size': currentSettings.tileSize}">
 
-				<button class="make-game" @click="setBoard">
-					☛ make game ☚
-				</button>
+				<h1>settings</h1>
 
 				<h2>presets</h2>
 				<input-presets
@@ -100,16 +97,6 @@
 							pieces are placed automatically
 						</label>
 					</p>
-					<p :style="{color: deckSize === intendedSize? 'inherit' : 'var(--red)'}">
-						{{ deckSize }}/{{ intendedSize }}: {{
-						deckSize === intendedSize
-							? 'no dice will be skipped or duplicated'
-							: deckSize > intendedSize
-								? 'too many dice for this board size! some will not show up'
-								: 'too few dice for this board size! some will be duplicated'
-						}}
-					</p>
-					<p v-if="tooFewHomes" style="color:var(--red);">there aren't enough dice with the home modifier in their top face; all dice will be considered potential homes</p>
 				</fieldset>
 				
 				<h2>players</h2>
@@ -219,7 +206,13 @@
 					</fieldset>
 				</div>
 
-				<button class="make-game" @click="setBoard">
+				<div class="warnings">
+					<div v-for="warning in warnings">
+						{{ warning }}
+					</div>
+				</div>
+
+				<button class="make-game" :class="{warning: warnings.length > 0}" @click="setBoard">
 					☛ make game ☚
 				</button>
 			</section>

@@ -179,8 +179,6 @@ const app = createApp({
 			],
 			currentTab: "game",
 
-			settingsJson: "",
-
 			intendedSettings: {
 				rows: 4,
 				columns: 4,
@@ -323,8 +321,23 @@ const app = createApp({
 		rows() {
 			return this.currentSettings.rows;
 		},
+		homeCount() {
+			return this.deck.reduce((acc, d) => acc + d.faces[0].modifiers.has('home'), 0);
+		},
 		tooFewHomes() {
-			return this.intendedPlayers.length > this.deck.reduce((acc, d) => acc + d.faces[0].modifiers.has('home'), 0);
+			return this.intendedPlayers.length > this.homeCount;
+		},
+		warnings() {
+			let arr = [];
+			if (this.tooFewHomes) {
+				arr.push(`there aren't enough dice with the home modifier in their top face (${this.homeCount}/${this.intendedPlayers.length}); all dice will be considered potential homes`)
+			}
+			if (this.deckSize > this.intendedSize) {
+				arr.push(`too many dice for this board size (${this.deckSize}/${this.intendedSize}); some will not show up`);
+			} else if (this.deckSize < this.intendedSize) {
+				arr.push(`too few dice for this board size (${this.deckSize}/${this.intendedSize}); some will be duplicated`);
+			}
+			return arr;
 		},
 		deck() {
 			let deck = [];
@@ -1330,7 +1343,7 @@ app.component("input-presets", {
 			</div>
 			<button @click="exportSettings()">export</button>
 			or
-			<button @click="importSettings()">import</button>:
+			<button @click="importSettings()" :disabled="!canImport">import</button>:
 			<input type="text" v-model="settingsJson"></input>
 		</fieldset>`,
 	data() {
@@ -1618,7 +1631,6 @@ app.component("input-presets", {
 				"rows",
 				"columns",
 				"numberOfPlayers",
-				"homeDiceType",
 			]) {
 				if (preset.hasOwnProperty(key)) {
 					settings[key] = preset[key];
@@ -1633,6 +1645,9 @@ app.component("input-presets", {
 				}
 			}
 
+			if (!preset.diceTypes) {
+				preset.diceTypes = [];
+			}
 			if (!preset.diceTypes.length) {
 				preset.diceTypes.push({});
 			}
@@ -1658,7 +1673,6 @@ app.component("input-presets", {
 				}
 				settings.playerTemplates.push(playerTemplate);
 			}
-
 			this.$emit("pickPreset", settings);
 		},
 		fixDiceType(diceType) {
@@ -1693,9 +1707,9 @@ app.component("input-presets", {
 			preset.imported = true;
 			this.presets.push(preset);
 			this.pickPreset(preset);
+			this.settingsJson = "";
 		},
 		exportSettings() {
-			console.log(JSON.stringify(this.intendedSettings))
 			let settings = JSON.parse(JSON.stringify(this.intendedSettings));
 			const diceTypes = this.intendedSettings.diceTypes;
 			for (let i = 0; i < diceTypes.length; i++) {
@@ -1727,6 +1741,14 @@ app.component("input-presets", {
 				setSuit: false,
 				suitIsInherited: true,
 			};
+		},
+		canImport() {
+			try {
+				JSON.parse(this.settingsJson);
+			} catch(e) {
+				return false;
+			}
+			return true;
 		},
 	},
 });

@@ -426,14 +426,28 @@ button:hover {
 	color: var(--bg-0);
 }
 
+button:disabled {
+	background: var(--bg-4);
+	color: var(--bg-1);
+}
+
 button.make-game {
-	margin: 10px 0;
+	margin: 10px auto;
 	display: block;
-	width: 100%;
+	max-width: 450px;
 	padding: 10px;
 	font-size: 1.5em;
 	clip-path: polygon(20% 0%, 80% 0%, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0% 80%, 0% 20%);
 	transition-duration: .8s;
+}
+
+button.make-game.warning {
+	color: var(--red);
+}
+
+button.make-game.warning:hover {
+	color: var(--bg-1);
+	background: var(--red);
 }
 
 button.corner {
@@ -637,5 +651,14 @@ fieldset ul {
 	padding: 0 0 0 10px;
 	list-style: none;
 }
-li {
+
+.warnings {
+	margin-top: 16px;
+}
+
+.warnings > div {
+	margin: 8px 0;
+	padding: 8px;
+	background:var(--red);
+	color:var(--bg-0);
 }
