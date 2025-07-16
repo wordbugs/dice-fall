@@ -600,7 +600,7 @@ const app = createApp({
 					position: -1000,
 					x: -1,
 					y: -1,
-					movesLeft: 4,
+					movesLeft: 1,
 					movesMade: 0,
 					hasUsedAPortalThisTurn: false,
 					turnStartTile: null,
@@ -630,6 +630,7 @@ const app = createApp({
 				if (!isNaN(c.playerStart)) {
 					const player = this.players[c.playerStart];
 					this.setPosition(player, i);
+					player.movesLeft = c.faces[0].value;
 					c.state = STATE_WEAK;
 					c.home = player;
 				} else if (this.getFace(c).modifiers.has("fallen")) {
@@ -1407,7 +1408,8 @@ app.component("input-presets", {
 			<div v-for="(preset, i) in presets">
 				<custom-tooltip>{{ preset.description }}</custom-tooltip>
 				<button @click="pickPreset(preset)">{{ preset.name }}</button>
-				<span v-if="preset.imported">(imported)</span>
+				<span v-if="preset.imported"> (imported)</span>
+				<template v-else> (<a :href="getPresetUrl(i)">link</a>)</template>
 			</div>
 			<button @click="exportSettings()">export</button>
 			or
@@ -1439,7 +1441,7 @@ app.component("input-presets", {
 					],
 				},
 				{
-					name: "collapsi standard 1v1 4x4",
+					name: "collapsi 1v1 4x4",
 					description:
 						"beginner-friendly setup created by mark ball. the first turn you must move once; since then you must move as much as the number on the die you are on demands. dice collapse when you leave them at the start of your turn... first to be unable to move loses.",
 					videoLink: "https://www.youtube.com/watch?v=FgHkYEFGCXI",
@@ -1458,7 +1460,7 @@ app.component("input-presets", {
 					],
 				},
 				{
-					name: "collapsi standard 1v1v1v1 6x6",
+					name: "collapsi 1v1v1v1 6x6",
 					description:
 						"recommended vanilla setup for collapsi, created by mark ball. the first turn you must move once; since then you must move as much as the number on the die you are on demands. dice collapse when you leave them at the start of your turn... first to be unable to move loses.",
 
@@ -1641,11 +1643,13 @@ app.component("input-presets", {
 					],
 				},
 				{
-					name: "collapsi wizards 1v1 6x6",
+					name: "wizards 4 6x6",
 					description:
 						"collapsi except spades allow you to float a collapsed tile of your choosing, clubs allow you to sink a floating tile of your choosing, hearts are havens that let you stop moving (awww) but are also fragile (T_T) and diamonds are portals.",
 					playerControllers: [
 						CONTROLLER_PLAYER_MOUSE_AND_WASD,
+						CONTROLLER_BOT_RANDOM,
+						CONTROLLER_BOT_RANDOM,
 						CONTROLLER_BOT_RANDOM,
 					],
 					columns: 6,
@@ -1657,8 +1661,8 @@ app.component("input-presets", {
 						clubs: [ "bomb" ],
 					},
 					diceTypes: [
-						{ amount: 2, faces: [{ value: 1, modifiers: ["home"] }] },
-						{ amount: 2, setSuit: true, faces: [{ value: 1, modifiers: ["fallen"] }] },
+						{ amount: 4, faces: [{ value: 1, modifiers: ["home"] }] },
+						//{ amount: 2, setSuit: true, faces: [{ value: 1, modifiers: ["fallen"] }] },
 						{ amount: 8, setSuit: true, faces: [{ value: 1 }] },
 						{ amount: 8, setSuit: true, faces: [{ value: 2 }] },
 						{ amount: 8, setSuit: true, faces: [{ value: 3 }] },
@@ -1708,6 +1712,9 @@ app.component("input-presets", {
 				},
 				diceTypes: [],
 			};
+		},
+		getPresetUrl(i) {
+			return `//${window.location.host}${window.location.pathname}?preset=${i}`;
 		},
 		pickPreset(preset) {
 			preset = JSON.parse(JSON.stringify(preset));

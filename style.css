@@ -680,3 +680,16 @@ fieldset ul {
 .ability-button:hover {
 	fill: var(--bg-7);
 }
+
+.down-link {
+	position: fixed;
+	bottom: 0;
+	right: 0;
+	transform: rotate(90deg);
+	font-size: var(--tile-size);
+	text-decoration: none;
+	color: var(--bg-1);
+}
+.down-link:hover {
+	color: var(--bg-5);
+}

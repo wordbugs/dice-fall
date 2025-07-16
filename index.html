@@ -35,9 +35,8 @@
 					<li><strong>portal</strong>: allows direct movement to any other portal. a piece can only use the first portal it lands on each turn</li>
 					<li><strong>floating</strong>: does not collapse unless a player is on it, needs to move, and can't</li>
 					<li><strong>hazard</strong>: collapses when a piece is on it at the end of its turn</li>
-					<!--li>bomb: (not implemented)</li>
-					<li>shovel: (not implemented)</li>
-					<li>tunnel: (not implemented)</li-->
+					<li><strong>bomb</strong>: allows whoever starts a turn on it to make any standing (and unoccupied) die to collapse</li>
+					<li><strong>shovel</strong>: allows whoever starts a turn on it to make any fallen die float again</li>
 				</ul>
 				<p>suits are special modifiers that are merely cosmetic until they're configured to do something else.</p>
 
@@ -49,7 +48,7 @@
 
 			</article>
 
-			<section v-show="currentTab==='settings'" :style="{'--tile-size': currentSettings.tileSize}">
+			<section v-show="currentTab==='settings'" :style="{'--tile-size': currentSettings.tileSize+'px'}">
 
 				<h1>settings</h1>
 
@@ -211,7 +210,8 @@
 					</div>
 				</div>
 
-				<button class="make-game" :class="{warning: warnings.length > 0}" @click="setBoard">
+				<a class="down-link" href="#make-game">☛</a>
+				<button id="make-game" class="make-game" :class="{warning: warnings.length > 0}" @click="setBoard">
 					☛ make game ☚
 				</button>
 			</section>
