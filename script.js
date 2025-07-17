@@ -181,18 +181,23 @@ const app = createApp({
 			],
 			abilities: {
 				"shovel": {
-					isValidTarget(die) {
-						return die.state === STATE_COLLAPSED;
+					isValidTarget(die, occupant, allowResurrection=false) {
+						return die.state === STATE_COLLAPSED && (allowResurrection || !occupant);
 					},
-					effect(die) {
-						die.state = STATE_INTACT;
+					effect(die, occupant) {
+						if (occupant) {
+							die.state = STATE_WEAK;
+							occupant.fallen = false;
+						} else {
+							die.state = STATE_INTACT;
+						}
 					},
 				},
 				"bomb": {
-					isValidTarget(die) {
+					isValidTarget(die, occupant, allowResurrection=false) {
 						return die.state === STATE_INTACT;
 					},
-					effect(die) {
+					effect(die, occupant) {
 						die.state = STATE_COLLAPSED;
 					},
 				},
@@ -920,14 +925,14 @@ const app = createApp({
 		chooseAbility(abilityName) {
 			this.activeAbility = abilityName;
 			for (let i = 0; i < this.dice.length; i++) {
-				if (this.abilities[this.activeAbility].isValidTarget(this.dice[i])) {
+				if (this.abilities[this.activeAbility].isValidTarget(this.dice[i], this.players.filter(p => p.position===i)[0], this.currentSettings.allowResurrection)) {
 					this.legalAbilityTargets.push(i);
 				}
 			}
 			this.availableAbilities = [];
 		},
 		activateAbility(i) {
-			this.abilities[this.activeAbility].effect(this.dice[i]);
+			this.abilities[this.activeAbility].effect(this.dice[i], this.players.filter(p => p.position===i)[0]);
 			this.activeAbility = null;
 			this.checkLegalMoves();
 		},
@@ -1693,6 +1698,7 @@ app.component("input-presets", {
 				name: "unknown preset",
 				randomizeTurnOrder: true,
 				randomPlacement: true,
+				allowResurrection: false,
 				description: "?",
 				tileSize: 60,
 				numberOfPlayers: 2,
