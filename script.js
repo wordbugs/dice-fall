@@ -185,11 +185,13 @@ const app = createApp({
 						return die.state === STATE_COLLAPSED && (allowResurrection || !occupant);
 					},
 					effect(die, occupant) {
-						if (occupant) {
-							die.state = STATE_WEAK;
-							occupant.fallen = false;
-						} else {
-							die.state = STATE_INTACT;
+						if (die) {
+							if (occupant) {
+								die.state = STATE_WEAK;
+								occupant.fallen = false;
+							} else {
+								die.state = STATE_INTACT;
+							}
 						}
 					},
 				},
@@ -198,7 +200,8 @@ const app = createApp({
 						return die.state === STATE_INTACT;
 					},
 					effect(die, occupant) {
-						die.state = STATE_COLLAPSED;
+						if (die)
+							die.state = STATE_COLLAPSED;
 					},
 				},
 			},
@@ -869,17 +872,17 @@ const app = createApp({
 						if (this.pause) {
 							return;
 						}
-						if (this.availableAbilities.length > 1) {
-							this.chooseAbility(this.availableAbilities[Math.floor(Math.random() * this.availableAbilities.length)]);
-						}
-						if (this.activeAbility) {
-							this.activateAbility(this.legalAbilityTargets[Math.floor(Math.random() * this.legalAbilityTargets.length)]);
-							if (this.checkLegalMoves())
-								this.awaitCommand();
-							return;
-						}
 						switch (this.activePlayer.controller) {
 							case CONTROLLER_BOT_RANDOM:
+								if (this.availableAbilities.length > 1) {
+									this.chooseAbility(this.availableAbilities[Math.floor(Math.random() * this.availableAbilities.length)]);
+								}
+								if (this.activeAbility) {
+									this.activateAbility(this.legalAbilityTargets[Math.floor(Math.random() * this.legalAbilityTargets.length)], false);
+									if (this.checkLegalMoves())
+										this.awaitCommand();
+									return;
+								}
 								let candidates = this.legalMoves;
 								if (this.activePlayer.movesLeft === 1) {
 									let safe = candidates.filter(
@@ -931,7 +934,10 @@ const app = createApp({
 			}
 			this.availableAbilities = [];
 		},
-		activateAbility(i) {
+		activateAbility(i, playerAction=true) {
+			if (playerAction && this.activePlayer.controller.startsWith("bot:")) {
+				return;
+			}
 			this.abilities[this.activeAbility].effect(this.dice[i], this.players.filter(p => p.position===i)[0]);
 			this.activeAbility = null;
 			this.checkLegalMoves();
